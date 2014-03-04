@@ -62,9 +62,9 @@ class CustomAuth(Auth):
 
 # a model for storing IPython profiles.
 class Profile(db.Model):
-	name = TextField()
+	name = CharField()
 	description = TextField()
-	command = TextField()
+	command = CharField()
 
 	def __unicode__(self):
 		return self.name
@@ -75,12 +75,12 @@ class ProfileAdmin(ModelAdmin):
 
 # a model for storing per-user notebook kernels.
 class Kernel(db.Model):
-    name = TextField()
+    name = CharField()
     created = DateTimeField(default=datetime.datetime.now)
     ended = DateTimeField()
-    subdomain = TextField(unique=True)
+    subdomain = CharField(unique=True)
     port = IntegerField()
-    root = TextField()
+    root = CharField()
     owner = ForeignKeyField(User)
     profile = ForeignKeyField(Profile)
 
@@ -124,7 +124,8 @@ def register_view():
         password = request.form["password"]
         print username, email, name, password
         # implement a check here, to search for existing users with the same email/username.
-        new_user = User(name=name, email=email, username=username, password=password)
+        new_user = User(name=name, email=email, username=username)
+        new_user.set_password(password)
         new_user.save()
         auth.login_user(new_user)
         return redirect('/')
