@@ -10,7 +10,6 @@
 
     <!-- Bootstrap core CSS -->
     <link href="/static/css/bootstrap.css" rel="stylesheet">
-    <link href="/static/css/signin.css" rel="stylesheet">
 
     <!-- Add custom CSS here -->
     <link href="/static/css/sb-admin.css" rel="stylesheet">
@@ -37,7 +36,7 @@
         <!-- Collect the nav links, forms, and other content for toggling -->
         <div class="collapse navbar-collapse navbar-ex1-collapse">
           <ul class="nav navbar-nav side-nav">
-            <li><a href="index.html"><i class="fa fa-dashboard"></i> Home</a></li>
+            <li><a href="http://mathharbor.com"><i class="fa fa-dashboard"></i> MathHarbor: Home</a></li>
             <!--<li><a href="charts.html"><i class="fa fa-bar-chart-o"></i> Analytics</a></li>-->
           </ul>
 
@@ -50,36 +49,17 @@
 
         <div class="row">
           <div class="col-lg-12">
-            <form class="form-signin" role="form">
-        <h2 class="form-signin-heading">Register</h2>
-        <input type="text" class="form-control" placeholder="Name" required autofocus>
-        <input type="email" class="form-control" placeholder="Email address" required>
-        <input type="text" class="form-control" placeholder="Username" required>
-        <input type="password" class="form-control" placeholder="Password" required>
-        <button class="btn btn-lg btn-primary btn-block" type="submit">Register</button>
-      </form>
+            {% block content %}{% endblock %}
+          </div>
         </div><!-- /.row -->
-</div>
+
       </div><!-- /#page-wrapper -->
 
-    
+    </div><!-- /#wrapper -->
 
     <!-- JavaScript -->
     <script src="/static/js/jquery-1.10.2.js"></script>
     <script src="/static/js/bootstrap.js"></script>
-<script type="text/javascript">
-  $("input#password").keypress(function(e){
-    if (e.keyCode == 13) {
-      $("form#login").submit();
-    }
-  });
-  $("a#btn-submit").click(function(){
-    $("form#login").submit();
-  });
-  $(function(){
-    $("a.entypo-social").tooltip({placement: 'bottom'});
-    $("form#login").validate();
-  });
-</script>
+
   </body>
 </html>
