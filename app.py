@@ -115,6 +115,21 @@ def index_view():
     else:
         return render_template('index.html')
 
+@app.route('/register', methods=['POST', 'GET'])
+def register_view():
+    if request.method == 'POST':
+        name = request.form["name"]
+        email = request.form["email"]
+        username = request.form["username"]
+        password = request.form["password"]
+        print username, email, name, password
+        # implement a check here, to search for existing users with the same email/username.
+        new_user = User(name=name, email=email, username=username, password=password)
+        new_user.save()
+        auth.login_user(new_user)
+        return redirect('/')
+    return render_template('register.html')
+
 @app.route('/login', methods=['POST', 'GET'])
 def login_view():
     if request.method == 'POST':
