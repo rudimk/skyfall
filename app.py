@@ -60,11 +60,51 @@ class CustomAuth(Auth):
     def get_model_admin(self):
         return UserAdmin
 
+# a model for storing IPython profiles.
+class Profile(db.Model):
+	name = TextField()
+	description = TextField()
+	command = TextField()
 
+	def __unicode__(self):
+		return self.name
+
+class ProfileAdmin(ModelAdmin):
+	columns = ('name', 'description', 'command',)
+
+
+# a model for storing per-user notebook kernels.
 class Kernel(db.Model):
-    message = TextField()
+    name = TextField()
     created = DateTimeField(default=datetime.datetime.now)
+    ended = DateTimeField()
+    subdomain = TextField(unique=True)
+    port = IntegerField()
+    root = TextField()
+    owner = ForeignKeyField(User)
+    profile = ForeignKeyField(Profile)
 
+    def __unicode__(self):
+    	return self.name
+
+class KernelAdmin(ModelAdmin):
+	columns = ('name', 'created', 'ended', 'subdomain', 'port', 'root', 'owner', 'profile',)
+
+# subclass the admin so that it recognizes our super-user.
+class CustomAdmin(Admin):
+    def check_user_permission(self, user):
+        return user.is_superuser
+
+
+
+#Initialize auth and admin modules.
+
+auth = CustomAuth(app, db)
+admin = CustomAdmin(app, auth)
+admin.register(User, UserAdmin)
+admin.register(Kernel, KernelAdmin)
+admin.register(Profile, ProfileAdmin)
+admin.setup()
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0')
+    app.run(host='0.0.0.0', port=8080)
