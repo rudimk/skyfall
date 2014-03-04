@@ -1,8 +1,18 @@
-from flask import Flask
-# flask-peewee bindings
-from flask_peewee.db import Database
+import os
+import os.path as op
+import subprocess
+import hashlib
 import datetime
+from flask import Flask, url_for, redirect, render_template, request, session, flash
+
+from flask_peewee.auth import Auth
+from flask_peewee.auth import BaseUser
+from flask_peewee.db import Database
 from peewee import *
+from flask_peewee.admin import Admin
+from flask_peewee.admin import ModelAdmin
+
+from flask_debugtoolbar import DebugToolbarExtension
 
 # configure our database
 DATABASE = {
@@ -14,6 +24,13 @@ DEBUG = True
 SECRET_KEY = 'ssshhhh'
 app = Flask(__name__)
 app.config.from_object(__name__)
+app.config['DEBUG_TB_INTERCEPT_REDIRECTS'] = False
+app.config['DEBUG_TB_PROFILER_ENABLED'] = True
+
+# instantiate the db wrapper
+db = Database(app)
+
+toolbar = DebugToolbarExtension(app)
 
 # Models
 
