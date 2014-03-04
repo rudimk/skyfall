@@ -110,7 +110,23 @@ admin.setup()
 
 @app.route('/')
 def index_view():
-	return render_template('layout.html')
+    if auth.get_logged_in_user():
+        return render_template('layout.html')
+    else:
+        return render_template('index.html')
+
+@app.route('/login', methods=['POST', 'GET'])
+def login_view():
+    if request.method == 'POST':
+        username = request.form["username"]
+        password = request.form["password"]
+        current_user = auth.authenticate(username, password)
+        if current_user == False:
+            return redirect('/login')
+        else:
+            auth.login_user(current_user)
+            return redirect('/')
+    return render_template('login.html')
 
 
 if __name__ == '__main__':
