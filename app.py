@@ -122,13 +122,16 @@ def register_view():
         email = request.form["email"]
         username = request.form["username"]
         password = request.form["password"]
-        print username, email, name, password
         # implement a check here, to search for existing users with the same email/username.
-        new_user = User(name=name, email=email, username=username)
-        new_user.set_password(password)
-        new_user.save()
-        auth.login_user(new_user)
-        return redirect('/')
+        try:
+            check_user = User.get(username=username)
+            return redirect('/register')
+        except User.DoesNotExist:
+            new_user = User(name=name, email=email, username=username)
+            new_user.set_password(password)
+            new_user.save()
+            auth.login_user(new_user)
+            return redirect('/')
     return render_template('register.html')
 
 @app.route('/login', methods=['POST', 'GET'])
