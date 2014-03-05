@@ -77,7 +77,7 @@ class ProfileAdmin(ModelAdmin):
 class Kernel(db.Model):
     name = CharField()
     created = DateTimeField(default=datetime.datetime.now)
-    ended = DateTimeField()
+    ended = DateTimeField(null=True)
     subdomain = CharField(unique=True)
     port = IntegerField()
     root = CharField()
@@ -111,7 +111,7 @@ admin.setup()
 @app.route('/')
 def index_view():
     if auth.get_logged_in_user():
-        return render_template('layout.html')
+        return redirect('/kernels')
     else:
         return render_template('index.html')
 
@@ -147,6 +147,13 @@ def login_view():
             return redirect('/')
     return render_template('login.html')
 
+@app.route('/kernels')
+def kernels_view():
+    current_user = auth.get_logged_in_user()
+    user_kernels = Kernel.select().where(Kernel.owner == current_user)
+    for k in user_kernels:
+        print k.name
+    return render_template('kernels.html', user_kernels=user_kernels)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8080)
