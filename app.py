@@ -81,6 +81,7 @@ class Kernel(db.Model):
     subdomain = CharField(unique=True)
     port = IntegerField()
     root = CharField()
+    state = CharField()
     owner = ForeignKeyField(User)
     profile = ForeignKeyField(Profile)
 
@@ -150,10 +151,13 @@ def login_view():
 @app.route('/kernels')
 def kernels_view():
     current_user = auth.get_logged_in_user()
-    user_kernels = Kernel.select().where(Kernel.owner == current_user)
-    for k in user_kernels:
+    running_user_kernels = Kernel.select().where(Kernel.owner == current_user and Kernel.state == 'Running')
+    stopped_user_kernels = Kernel.select().where(Kernel.owner == current_user and Kernel.state == 'Stopped')
+    for k in running_user_kernels:
         print k.name
-    return render_template('kernels.html', user_kernels=user_kernels)
+    for j in stopped_user_kernels:
+        print j.name
+    return render_template('kernels.html', running_user_kernels=running_user_kernels, stopped_user_kernels=stopped_user_kernels)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8080)
