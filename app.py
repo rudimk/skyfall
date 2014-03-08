@@ -1,6 +1,5 @@
 import os
 import os.path as op
-import subprocess
 import hashlib
 import datetime
 from flask import Flask, url_for, redirect, render_template, request, session, flash
@@ -61,15 +60,14 @@ class CustomAuth(Auth):
         return UserAdmin
 
 # a model for storing IPython profiles.
-class Profile(db.Model):
+class Image(db.Model):
 	name = CharField()
 	description = TextField()
-	command = CharField()
 
 	def __unicode__(self):
 		return self.name
 
-class ProfileAdmin(ModelAdmin):
+class ImageAdmin(ModelAdmin):
 	columns = ('name', 'description', 'command',)
 
 
@@ -79,17 +77,18 @@ class Kernel(db.Model):
     created = DateTimeField(default=datetime.datetime.now)
     ended = DateTimeField(null=True)
     subdomain = CharField(unique=True)
+    kernel_id = IntegerField()
     port = IntegerField()
     root = CharField()
     state = CharField()
     owner = ForeignKeyField(User)
-    profile = ForeignKeyField(Profile)
+    image = ForeignKeyField(Image)
 
     def __unicode__(self):
     	return self.name
 
 class KernelAdmin(ModelAdmin):
-	columns = ('name', 'created', 'ended', 'subdomain', 'port', 'root', 'owner', 'profile',)
+	columns = ('name', 'created', 'ended', 'subdomain', 'port', 'root', 'owner', 'image',)
 
 # subclass the admin so that it recognizes our super-user.
 class CustomAdmin(Admin):
@@ -106,6 +105,14 @@ admin.register(User, UserAdmin)
 admin.register(Kernel, KernelAdmin)
 admin.register(Profile, ProfileAdmin)
 admin.setup()
+
+# Kernel methods.
+
+def kernel_start(user, name, subdomain, port, root, profile):
+    kernel_pid = os.spawnl(os.P_NOWAIT, 'ipython notebook')
+    new_kernel = Kernel(name=name, owner=user, subdomain=subdomain, port=port, root=root, state='Running', profile=profile, kernel_pid=kernel_pid)
+    new_kernel. save()
+    return new_kernel
 
 # App routes.
 
@@ -153,11 +160,18 @@ def kernels_view():
     current_user = auth.get_logged_in_user()
     running_user_kernels = Kernel.select().where(Kernel.owner == current_user and Kernel.state == 'Running')
     stopped_user_kernels = Kernel.select().where(Kernel.owner == current_user and Kernel.state == 'Stopped')
-    for k in running_user_kernels:
-        print k.name
-    for j in stopped_user_kernels:
-        print j.name
     return render_template('kernels.html', running_user_kernels=running_user_kernels, stopped_user_kernels=stopped_user_kernels)
+
+@app.route('/kernel_new')
+def new_kernel_view():
+    user = auth.get_logged_in_user()
+    profile = Profile.select().where(Profile.name == 'Default')
+    name = 'devtestthree'
+    subdomain = '%s.mathharbor.com' %(name)
+    port = 7000
+    root = '/files/devtestthree'
+    new_kernel = kernel_start(user=user, name=name, subdomain=subdomain, port=port, root=root, profile=profile)
+    return redirect('/kernels')
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8080)
