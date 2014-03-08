@@ -68,7 +68,7 @@ class Image(db.Model):
 		return self.name
 
 class ImageAdmin(ModelAdmin):
-	columns = ('name', 'description', 'command',)
+	columns = ('name', 'description', )
 
 
 # a model for storing per-user notebook kernels.
@@ -77,7 +77,7 @@ class Kernel(db.Model):
     created = DateTimeField(default=datetime.datetime.now)
     ended = DateTimeField(null=True)
     subdomain = CharField(unique=True)
-    kernel_id = IntegerField()
+    kernel_id = CharField()
     port = IntegerField()
     root = CharField()
     state = CharField()
@@ -103,7 +103,7 @@ auth = CustomAuth(app, db)
 admin = CustomAdmin(app, auth)
 admin.register(User, UserAdmin)
 admin.register(Kernel, KernelAdmin)
-admin.register(Profile, ProfileAdmin)
+admin.register(Image, ImageAdmin)
 admin.setup()
 
 # Kernel methods.
