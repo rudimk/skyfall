@@ -1,0 +1,25 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="row">
+          <div class="col-lg-6">
+            <h2>Current Images</h2>
+            <div class="table-responsive">
+              <table class="table table-bordered table-hover">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Description</th>
+                  </tr>
+                </thead>
+                <tbody>
+                {% for image in images %}
+                  <tr>
+                    <td>{{ image.name }}</td>
+                    <td>{{ image.description }}</td>
+                  </tr>
+                {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+{% endblock %}

@@ -162,6 +162,11 @@ def kernels_view():
     stopped_user_kernels = Kernel.select().where(Kernel.owner == current_user and Kernel.state == 'Stopped')
     return render_template('kernels.html', running_user_kernels=running_user_kernels, stopped_user_kernels=stopped_user_kernels)
 
+@app.route('/images')
+def images_view():
+    images = Image.select()
+    return render_template('images.html', images=images)
+
 @app.route('/kernel_new')
 def new_kernel_view():
     user = auth.get_logged_in_user()
