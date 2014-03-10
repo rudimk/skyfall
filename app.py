@@ -110,7 +110,7 @@ admin.setup()
 # Kernel methods.
 
 def kernel_start(user, name, subdomain, port, root, image):
-    kernel_pid_raw = subprocess.check_output("docker run -d -i -t -v %s:/files -p %s %s /bin/bash" %(root, port, image), shell=True)
+    kernel_pid_raw = subprocess.check_output("docker run -d -i -t -v %s:/files -p %s %s /bin/bash" %(root, port, image.name), shell=True)
     kernel_pid = kernel_pid_raw.strip('\n')
     kernel_port = subprocess.check_output("docker port %s %s" %(kernel_pid, port), shell=True)
     new_kernel = Kernel(name=name, owner=user, subdomain=subdomain, port=kernel_port, root=root, state='Running', image=image, kernel_pid=kernel_pid)
@@ -173,7 +173,7 @@ def images_view():
 @app.route('/kernel_new')
 def new_kernel_view():
     user = auth.get_logged_in_user()
-    image = 'mathharbor/ipython' #Profile.select().where(Profile.name == 'Default')
+    image = Image.select().where(Image.name == 'mathharbor/ipython')
     name = 'devtestthree'
     subdomain = '%s.mathharbor.com' %(name)
     port = 5000
