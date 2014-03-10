@@ -110,10 +110,11 @@ admin.setup()
 # Kernel methods.
 
 def kernel_start(user, name, subdomain, port, root, image):
-    kernel_pid_raw = subprocess.check_output("docker run -d -i -t -v %s:/files -p %s %s /bin/bash" %(root, port, image.name), shell=True)
+    kernel_pid_raw = subprocess.check_output("docker run -d -i -t -v %s:/files -p %s %s" %(root, port, image[0].name), shell=True)
     kernel_pid = kernel_pid_raw.strip('\n')
-    kernel_port = subprocess.check_output("docker port %s %s" %(kernel_pid, port), shell=True)
-    new_kernel = Kernel(name=name, owner=user, subdomain=subdomain, port=kernel_port, root=root, state='Running', image=image, kernel_pid=kernel_pid)
+    kernel_port_raw = subprocess.check_output("docker port %s %s" %(kernel_pid, port), shell=True)
+    kernel_port = kernel_port_raw[-6:].strip('\n')
+    new_kernel = Kernel(name=name, owner=user, subdomain=subdomain, port=kernel_port, root=root, state='Running', image=image, kernel_id=kernel_pid)
     new_kernel.save()
     return new_kernel
 
@@ -177,9 +178,9 @@ def new_kernel_view():
     name = 'devtestthree'
     subdomain = '%s.mathharbor.com' %(name)
     port = 5000
-    root = '/files/%s' %user.username
+    root = '/root/shipyard/files/%s' %user.username
     new_kernel = kernel_start(user=user, name=name, subdomain=subdomain, port=port, root=root, image=image)
     return redirect('/kernels')
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8080)
+    app.run(host='0.0.0.0', port=5000)
