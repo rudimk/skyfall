@@ -142,6 +142,10 @@ def register_view():
             new_user = User(name=name, email=email, username=username)
             new_user.set_password(password)
             new_user.save()
+            workspace_name = user.username
+            os.chdir('files')
+            os.mkdir(workspace_name)
+            os.chdir('../')
             auth.login_user(new_user)
             return redirect('/')
     return render_template('register.html')
@@ -178,7 +182,7 @@ def new_kernel_view():
     name = 'devtestthree'
     subdomain = '%s.mathharbor.com' %(name)
     port = 5000
-    root = '/root/shipyard/files/%s' %user.username
+    root = '/root/skyfall/files/%s' %user.username
     new_kernel = kernel_start(user=user, name=name, subdomain=subdomain, port=port, root=root, image=image)
     return redirect('/kernels')
 
