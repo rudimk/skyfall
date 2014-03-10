@@ -1,5 +1,6 @@
 import os
 import os.path as op
+import subprocess
 import hashlib
 import datetime
 from flask import Flask, url_for, redirect, render_template, request, session, flash
@@ -108,10 +109,12 @@ admin.setup()
 
 # Kernel methods.
 
-def kernel_start(user, name, subdomain, port, root, profile):
-    kernel_pid = os.spawnl(os.P_NOWAIT, 'ipython notebook')
-    new_kernel = Kernel(name=name, owner=user, subdomain=subdomain, port=port, root=root, state='Running', profile=profile, kernel_pid=kernel_pid)
-    new_kernel. save()
+def kernel_start(user, name, subdomain, port, root, image):
+    kernel_pid_raw = subprocess.check_output("docker run -d -i -t -v %s:/files -p %s %s /bin/bash" %(root, port, image), shell=True)
+    kernel_pid = kernel_pid_raw.strip('\n')
+    kernel_port = subprocess.check_output("docker port %s %s" %(kernel_pid, port), shell=True)
+    new_kernel = Kernel(name=name, owner=user, subdomain=subdomain, port=kernel_port, root=root, state='Running', image=image, kernel_pid=kernel_pid)
+    new_kernel.save()
     return new_kernel
 
 # App routes.
@@ -170,12 +173,12 @@ def images_view():
 @app.route('/kernel_new')
 def new_kernel_view():
     user = auth.get_logged_in_user()
-    profile = Profile.select().where(Profile.name == 'Default')
+    image = 'mathharbor/ipython' #Profile.select().where(Profile.name == 'Default')
     name = 'devtestthree'
     subdomain = '%s.mathharbor.com' %(name)
-    port = 7000
-    root = '/files/devtestthree'
-    new_kernel = kernel_start(user=user, name=name, subdomain=subdomain, port=port, root=root, profile=profile)
+    port = 5000
+    root = '/files/%s' %user.username
+    new_kernel = kernel_start(user=user, name=name, subdomain=subdomain, port=port, root=root, image=image)
     return redirect('/kernels')
 
 if __name__ == '__main__':
