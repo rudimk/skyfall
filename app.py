@@ -142,7 +142,7 @@ def register_view():
             new_user = User(name=name, email=email, username=username)
             new_user.set_password(password)
             new_user.save()
-            workspace_name = user.username
+            workspace_name = new_user.username
             os.chdir('files')
             os.mkdir(workspace_name)
             os.chdir('../')
@@ -166,8 +166,8 @@ def login_view():
 @app.route('/kernels')
 def kernels_view():
     current_user = auth.get_logged_in_user()
-    running_user_kernels = Kernel.select().where(Kernel.owner == current_user and Kernel.state == 'Running')
-    stopped_user_kernels = Kernel.select().where(Kernel.owner == current_user and Kernel.state == 'Stopped')
+    running_user_kernels = Kernel.select().where(Kernel.owner == current_user or Kernel.state == 'Running')
+    stopped_user_kernels = Kernel.select().where(Kernel.owner == current_user or Kernel.state == 'Stopped')
     return render_template('kernels.html', running_user_kernels=running_user_kernels, stopped_user_kernels=stopped_user_kernels)
 
 @app.route('/images')
