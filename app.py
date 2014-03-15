@@ -89,7 +89,7 @@ class Kernel(db.Model):
     	return self.name
 
 class KernelAdmin(ModelAdmin):
-	columns = ('name', 'created', 'ended', 'subdomain', 'port', 'root', 'owner', 'image',)
+	columns = ('name', 'created', 'ended', 'subdomain', 'port', 'root', 'state', 'owner', 'image',)
 
 # subclass the admin so that it recognizes our super-user.
 class CustomAdmin(Admin):
