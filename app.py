@@ -109,6 +109,7 @@ admin.setup()
 
 # Kernel methods.
 
+# Starts a kernel.
 def kernel_start(user, name, subdomain, port, root, image):
     kernel_pid_raw = subprocess.check_output("docker run -d -i -t -v %s:/files -p %s %s" %(root, port, image[0].name), shell=True)
     kernel_pid = kernel_pid_raw.strip('\n')
@@ -117,6 +118,13 @@ def kernel_start(user, name, subdomain, port, root, image):
     new_kernel = Kernel(name=name, owner=user, subdomain=subdomain, port=kernel_port, root=root, state='Running', image=image, kernel_id=kernel_pid)
     new_kernel.save()
     return new_kernel
+
+# Stops a kernel.
+def kernel_stop(kernel_pid):
+    s = subprocess.check_output("docker kill %s" %kernel_pid, shell=True)
+    kernel = Kernel.select().where(Kernel.kernel_id == kernel_pid)
+    kernel.state = 'Stopped'
+    kernel.save()
 
 # App routes.
 
@@ -187,4 +195,4 @@ def new_kernel_view():
     return redirect('/kernels')
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+    app.run(host='0.0.0.0', port=9000)
