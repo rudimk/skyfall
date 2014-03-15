@@ -174,8 +174,8 @@ def login_view():
 @app.route('/kernels')
 def kernels_view():
     current_user = auth.get_logged_in_user()
-    running_user_kernels = Kernel.select().where(Kernel.owner == current_user or Kernel.state == 'Running')
-    stopped_user_kernels = Kernel.select().where(Kernel.owner == current_user or Kernel.state == 'Stopped')
+    running_user_kernels = Kernel.select().where(Kernel.owner == current_user and Kernel.state == 'Running')
+    stopped_user_kernels = Kernel.select().where(Kernel.owner == current_user and Kernel.state == 'Stopped')
     return render_template('kernels.html', running_user_kernels=running_user_kernels, stopped_user_kernels=stopped_user_kernels)
 
 @app.route('/images')
