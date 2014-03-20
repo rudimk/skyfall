@@ -2,3 +2,36 @@
 - write code to start a docker container containing ipython. add the ipython notebook command to dockerfiles, and only start containers from the app. these will be called kernels. -- Done. Have to generalize it now, add a form at the frontend.
 - write code to store keys containing the subdomain and port for a particular kernel, in redis, for hipache. see https://bitbucket.org/mathharbor/shipyard/src/200556899dbb7ecccd92a4810ecd8f797319aba7/containers/views.py?at=master#cl-93 for more details.
 - work on forms for settings - user profile, billing.
+
+
+check for an open port
+----------------------
+def get_open_port():
+        import socket
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.bind(("",0))
+        s.listen(1)
+        port = s.getsockname()[1]
+        s.close()
+        return port
+
+
+
+spawn a kernel
+--------------------
+import os
+import time
+from multiprocessing import Process
+
+def start_notebook():
+        os.system("ipython notebook --ip=0.0.0.0 --port=5656")
+
+
+if __name__ == '__main__':
+        p = Process(target=start_notebook)
+        p.start()
+        time.sleep(10)
+        print "The pid is %s" %p.pid
+        time.sleep(30)
+        print "Terminating.."
+        p.terminate()
