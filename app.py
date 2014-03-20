@@ -115,7 +115,9 @@ def kernel_start(user, name, subdomain, port, root, image):
     kernel_pid = kernel_pid_raw.strip('\n')
     kernel_port_raw = subprocess.check_output("docker port %s %s" %(kernel_pid, port), shell=True)
     kernel_port = kernel_port_raw[-6:].strip('\n')
-    new_kernel = Kernel(name=name, owner=user, subdomain=subdomain, port=kernel_port, root=root, state='Running', image=image, kernel_id=kernel_pid)
+    wildcard_subdomain = ".platform.mathharbor.com"
+    kernel_subdomain = "http://" + subdomain + wildcard_subdomain
+    new_kernel = Kernel(name=name, owner=user, subdomain=kernel_subdomain, port=kernel_port, root=root, state='Running', image=image, kernel_id=kernel_pid)
     new_kernel.save()
     return new_kernel
 
@@ -174,9 +176,8 @@ def login_view():
 @app.route('/kernels')
 def kernels_view():
     current_user = auth.get_logged_in_user()
-    running_user_kernels = Kernel.select().where(Kernel.owner == current_user and Kernel.state == 'Running')
-    stopped_user_kernels = Kernel.select().where(Kernel.owner == current_user and Kernel.state == 'Stopped')
-    return render_template('kernels.html', running_user_kernels=running_user_kernels, stopped_user_kernels=stopped_user_kernels)
+    user_kernels = Kernel.select().where(Kernel.owner == current_user)
+    return render_template('kernels.html', user_kernels=user_kernels)
 
 @app.route('/images')
 def images_view():

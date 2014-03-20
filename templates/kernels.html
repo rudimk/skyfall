@@ -2,49 +2,32 @@
 {% block content %}
 <div class="row">
           <div class="col-lg-6">
-            <h2>Your Running Kernels</h2>
+            <h2>Your Kernels</h2>
             <div class="table-responsive">
               <table class="table table-bordered table-hover">
                 <thead>
                   <tr>
                     <th>Name</th>
-                    <th>Profile</th>
+                    <th>Image</th>
                     <th>Subdomain</th>
                     <th>Root</th>
+		    <th>State</th>
                     <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                {% for running_kernel in running_user_kernels %}
+                {% for kernel in user_kernels %}
                   <tr>
-                    <td>{{ running_kernel.name }}</td>
-                    <td>{{ running_kernel.profile }}</td>
-                    <td>{{ running_kernel.subdomain }}</td>
-                    <td>{{ running_kernel.root }}</td>
-                    <td><a class="btn btn-primary btn-xs">Kill</a></td>
-                  </tr>
-                {% endfor %}
-                </tbody>
-              </table>
-            </div>
-            <h2>Your Stopped Kernels</h2>
-            <div class="table-responsive">
-              <table class="table table-bordered table-hover">
-                <thead>
-                  <tr>
-                    <th>Name</th>
-                    <th>Profile</th>
-                    <th>Subdomain</th>
-                    <th>Root</th>
-                  </tr>
-                </thead>
-                <tbody>
-                {% for stopped_kernel in stopped_user_kernels %}
-                  <tr>
-                    <td>{{ stopped_kernel.name }}</td>
-                    <td>{{ stopped_kernel.profile }}</td>
-                    <td>{{ stopped_kernel.subdomain }}</td>
-                    <td>{{ stopped_kernel.root }}</td>
+                    <td>{{ kernel.name }}</td>
+                    <td>{{ kernel.image }}</td>
+                    <td><a href={{ kernel.subdomain }} target="_blank">{{ kernel.subdomain }}</a></td>
+                    <td>{{ kernel.root }}</td>
+		    <td>{{ kernel.state }}</td>
+		    {% if kernel.state == 'Running' %}
+                    	<td><a class="btn btn-primary btn-xs">Kill</a></td>
+		    {% else %}
+			<td></td>
+		    {% endif %}
                   </tr>
                 {% endfor %}
                 </tbody>
