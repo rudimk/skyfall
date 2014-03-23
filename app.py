@@ -1,7 +1,10 @@
 import os
+from multiprocessing import Process
+from subprocess import Popen
 import os.path as op
 import subprocess
 import hashlib
+from sh import ipython
 import datetime
 from flask import Flask, url_for, redirect, render_template, request, session, flash
 
@@ -16,8 +19,10 @@ from flask_debugtoolbar import DebugToolbarExtension
 
 # configure our database
 DATABASE = {
-    'name': 'dev.db',
-    'engine': 'peewee.SqliteDatabase',
+    'name': 'skyfall',
+    'engine': 'peewee.MySQLDatabase',
+    'user': 'root',
+    'passwd': 'brokenstrings',
 }
 
 DEBUG = True
@@ -74,11 +79,11 @@ class ImageAdmin(ModelAdmin):
 
 # a model for storing per-user notebook kernels.
 class Kernel(db.Model):
-    name = CharField()
+    name = CharField(unique=True)
     created = DateTimeField(default=datetime.datetime.now)
     ended = DateTimeField(null=True)
+    kernel_pid = IntegerField()
     subdomain = CharField(unique=True)
-    kernel_id = CharField()
     port = IntegerField()
     root = CharField()
     state = CharField()
@@ -89,7 +94,7 @@ class Kernel(db.Model):
     	return self.name
 
 class KernelAdmin(ModelAdmin):
-	columns = ('name', 'created', 'ended', 'subdomain', 'port', 'root', 'state', 'owner', 'image',)
+	columns = ('name', 'created', 'ended', 'kernel_pid', 'subdomain', 'port', 'root', 'state', 'owner', 'image',)
 
 # subclass the admin so that it recognizes our super-user.
 class CustomAdmin(Admin):
@@ -109,24 +114,32 @@ admin.setup()
 
 # Kernel methods.
 
+# Finds an empty port
+def get_open_port():
+    import socket
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.bind(("",0))
+    s.listen(1)
+    port = s.getsockname()[1]
+    s.close()
+    return port
+
+
+
 # Starts a kernel.
 def kernel_start(user, name, subdomain, port, root, image):
-    kernel_pid_raw = subprocess.check_output("docker run -d -i -t -v %s:/files -p %s %s" %(root, port, image[0].name), shell=True)
-    kernel_pid = kernel_pid_raw.strip('\n')
-    kernel_port_raw = subprocess.check_output("docker port %s %s" %(kernel_pid, port), shell=True)
-    kernel_port = kernel_port_raw[-6:].strip('\n')
-    wildcard_subdomain = ".platform.mathharbor.com"
-    kernel_subdomain = "http://" + subdomain + wildcard_subdomain
-    new_kernel = Kernel(name=name, owner=user, subdomain=kernel_subdomain, port=kernel_port, root=root, state='Running', image=image, kernel_id=kernel_pid)
+    os.chdir('files/%s' %user.username)
+    global user_kernel
+    user_kernel = Popen(['ipython', 'notebook', '--ip=0.0.0.0', '--port=%s' %port])
+    pid = user_kernel.pid
+    new_kernel = Kernel(name=name, owner=user, subdomain=subdomain, port=port, root=root, state='Running', image=image, kernel_pid=pid)
     new_kernel.save()
     return new_kernel
 
+
 # Stops a kernel.
-def kernel_stop(kernel_pid):
-    s = subprocess.check_output("docker kill %s" %kernel_pid, shell=True)
-    kernel = Kernel.select().where(Kernel.kernel_id == kernel_pid)
-    kernel.state = 'Stopped'
-    kernel.save()
+def kernel_terminate(kernel_pid):
+    user_kernel.kill()
 
 # App routes.
 
@@ -184,16 +197,25 @@ def images_view():
     images = Image.select()
     return render_template('images.html', images=images)
 
-@app.route('/kernel_new')
+@app.route('/kernels/new', methods=['GET', 'POST'])
 def new_kernel_view():
-    user = auth.get_logged_in_user()
-    image = Image.select().where(Image.name == 'mathharbor/ipython')
-    name = 'devtestthree'
-    subdomain = '%s.mathharbor.com' %(name)
-    port = 5000
-    root = '/root/skyfall/files/%s' %user.username
-    new_kernel = kernel_start(user=user, name=name, subdomain=subdomain, port=port, root=root, image=image)
+    if request.method == 'POST':
+        user = auth.get_logged_in_user()
+        i = 'mathharbor/ipython' #request.form["image"]
+        image = Image.select().where(Image.name == i)
+        name = request.form["name"]
+        subdomain = '%s.mathharbor.com' %(name)
+        port = get_open_port()
+        root = '/root/skyfall/files/%s' %user.username
+        new_kernel = kernel_start(user=user, name=name, subdomain=subdomain, port=port, root=root, image=image)
+        return redirect('/kernels')
+    return render_template('new_kernel.html')
+
+@app.route('/kernels/kill/<int:kernel_pid>')
+def kernel_kill_view(kernel_pid):
+    r = kernel_terminate(kernel_pid)
     return redirect('/kernels')
 
+
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=9000)
+    app.run(host='0.0.0.0', port=9100)

@@ -24,7 +24,7 @@
                     <td>{{ kernel.root }}</td>
 		    <td>{{ kernel.state }}</td>
 		    {% if kernel.state == 'Running' %}
-                    	<td><a class="btn btn-primary btn-xs">Kill</a></td>
+                    	<td><a class="btn btn-primary btn-xs" href="/kernels/kill/{{ kernel.kernel_pid }}">Kill</a></td>
 		    {% else %}
 			<td></td>
 		    {% endif %}
