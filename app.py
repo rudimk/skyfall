@@ -1,11 +1,10 @@
+import sys
 import os
-from multiprocessing import Process
-from subprocess import Popen
 import os.path as op
-import subprocess
+import pexpect
 import hashlib
-from sh import ipython
 import datetime
+import socket
 from flask import Flask, url_for, redirect, render_template, request, session, flash
 
 from flask_peewee.auth import Auth
@@ -36,6 +35,9 @@ app.config['DEBUG_TB_PROFILER_ENABLED'] = True
 db = Database(app)
 
 toolbar = DebugToolbarExtension(app)
+
+# Global list to hold process objects
+harbors = []
 
 # Models
 
@@ -116,30 +118,36 @@ admin.setup()
 
 # Finds an empty port
 def get_open_port():
-    import socket
+    print "Opening random socket..."
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.bind(("",0))
+    print "Listening on random socket..."
     s.listen(1)
+    print "Obtaining random port..."
     port = s.getsockname()[1]
+    print "Random port obtained at: %s" %port
     s.close()
     return port
 
 
 
 # Starts a kernel.
-def kernel_start(user, name, subdomain, port, root, image):
-    os.chdir('files/%s' %user.username)
-    global user_kernel
-    user_kernel = Popen(['ipython', 'notebook', '--ip=0.0.0.0', '--port=%s' %port])
-    pid = user_kernel.pid
-    new_kernel = Kernel(name=name, owner=user, subdomain=subdomain, port=port, root=root, state='Running', image=image, kernel_pid=pid)
-    new_kernel.save()
-    return new_kernel
+def kernel_start(user, port):
+    print "Entering user directory..."
+    os.chdir('/home/vagrant/skyfall/files/%s' %user.username)
+    print "Generating kernel initiation command..."
+    command = '/home/vagrant/.virtualenvs/skyfall/bin/ipython notebook --ip=0.0.0.0 --port=%s --pylab=inline' %port
+    print "Kernel creation command: %s" %command
+    print "Spawning notebook kernel..."
+    process = pexpect.spawnu(command)
+    print "Notebook process started with pid: %s" %process.pid
+    process.logfile = sys.stdout
+    return process
 
 
 # Stops a kernel.
 def kernel_terminate(kernel_pid):
-    user_kernel.kill()
+    os.kill(kernel_pid, 0)
 
 # App routes.
 
@@ -206,16 +214,28 @@ def new_kernel_view():
         name = request.form["name"]
         subdomain = '%s.mathharbor.com' %(name)
         port = get_open_port()
-        root = '/root/skyfall/files/%s' %user.username
-        new_kernel = kernel_start(user=user, name=name, subdomain=subdomain, port=port, root=root, image=image)
-        return redirect('/kernels')
+        root = '/home/vagrant/skyfall/files/%s' %user.username
+        new_kernel_process = kernel_start(user=user, port=port)
+	print "Saving kernel details to the database..."
+        new_kernel = Kernel(name=name, owner=user, subdomain=subdomain, port=port, root=root, state='Running', image=image, kernel_pid=new_kernel_process.pid)
+	new_kernel.save()
+	print "Adding kernel to global kernel list..."
+	harbors.append(new_kernel_process)
+	return redirect('/kernels')
     return render_template('new_kernel.html')
 
 @app.route('/kernels/kill/<int:kernel_pid>')
 def kernel_kill_view(kernel_pid):
-    r = kernel_terminate(kernel_pid)
+    kernel_count = len(harbors)
+    i = 0
+    while(i < kernel_count):
+	print harbors[i].pid
+	if harbors[i].pid == kernel_pid:
+		harbors[i].terminate(force=True)
+		del harbors[i]
+	i += 1
     return redirect('/kernels')
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=9100)
+    app.run(host='0.0.0.0', port=8000)
