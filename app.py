@@ -134,9 +134,9 @@ def get_open_port():
 # Starts a kernel.
 def kernel_start(user, port):
     print "Entering user directory..."
-    os.chdir('/home/vagrant/skyfall/files/%s' %user.username)
+    os.chdir('/root/skyfall/files/%s' %user.username)
     print "Generating kernel initiation command..."
-    command = '/home/vagrant/.virtualenvs/skyfall/bin/ipython notebook --ip=0.0.0.0 --port=%s --pylab=inline' %port
+    command = '/usr/local/bin/ipython notebook --ip=0.0.0.0 --port=%s --pylab=inline' %port
     print "Kernel creation command: %s" %command
     print "Spawning notebook kernel..."
     process = pexpect.spawnu(command)
