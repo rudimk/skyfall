@@ -5,6 +5,8 @@ import pexpect
 import hashlib
 import datetime
 import socket
+import redis
+from IPython.lib import passwd
 from flask import Flask, url_for, redirect, render_template, request, session, flash
 
 from flask_peewee.auth import Auth
@@ -30,6 +32,7 @@ app = Flask(__name__)
 app.config.from_object(__name__)
 app.config['DEBUG_TB_INTERCEPT_REDIRECTS'] = False
 app.config['DEBUG_TB_PROFILER_ENABLED'] = True
+rds = redis.Redis(host='127.0.0.1', port=6379)
 
 # instantiate the db wrapper
 db = Database(app)
@@ -132,16 +135,25 @@ def get_open_port():
 
 
 # Starts a kernel.
-def kernel_start(user, port):
+def kernel_start(user, port, notebook_password, name):
     print "Entering user directory..."
     os.chdir('/root/skyfall/files/%s' %user.username)
     print "Generating kernel initiation command..."
-    command = '/usr/local/bin/ipython notebook --ip=0.0.0.0 --port=%s --pylab=inline' %port
+    command = '/usr/local/bin/ipython notebook --ip=0.0.0.0 --port=%s --pylab=inline --NotebookApp.password=%s' %(port, notebook_password)
     print "Kernel creation command: %s" %command
     print "Spawning notebook kernel..."
     process = pexpect.spawnu(command)
     print "Notebook process started with pid: %s" %process.pid
     process.logfile = sys.stdout
+    with rds.pipeline() as pipe:
+	domain_root = '.skyfall.mathharbor.com'
+	domain = name + domain_root
+	domain_key = "frontend:{0}".format(domain)
+	domain_port_url = "http://0.0.0.0:{0}".format(port)
+	pipe.delete(domain_key)
+	pipe.rpush(domain_key, name)
+	pipe.rpush(domain_key, domain_port_url)
+	pipe.execute()
     return process
 
 
@@ -212,10 +224,12 @@ def new_kernel_view():
         i = 'mathharbor/ipython' #request.form["image"]
         image = Image.select().where(Image.name == i)
         name = request.form["name"]
-        subdomain = '%s.mathharbor.com' %(name)
+	plaintext_password = request.form["password"]
+	notebook_password = passwd(plaintext_password)
+        subdomain = '%s.skyfall.mathharbor.com' %(name)
         port = get_open_port()
-        root = '/home/vagrant/skyfall/files/%s' %user.username
-        new_kernel_process = kernel_start(user=user, port=port)
+        root = '/root/skyfall/files/%s' %user.username
+        new_kernel_process = kernel_start(user=user, port=port, notebook_password=notebook_password, name=name)
 	print "Saving kernel details to the database..."
         new_kernel = Kernel(name=name, owner=user, subdomain=subdomain, port=port, root=root, state='Running', image=image, kernel_pid=new_kernel_process.pid)
 	new_kernel.save()
@@ -226,6 +240,7 @@ def new_kernel_view():
 
 @app.route('/kernels/kill/<int:kernel_pid>')
 def kernel_kill_view(kernel_pid):
+    user_kernel = Kernel.get(Kernel.kernel_pid == kernel_pid)
     kernel_count = len(harbors)
     i = 0
     while(i < kernel_count):
@@ -234,8 +249,10 @@ def kernel_kill_view(kernel_pid):
 		harbors[i].terminate(force=True)
 		del harbors[i]
 	i += 1
+    user_kernel.state = 'Stopped'
+    user_kernel.save()
     return redirect('/kernels')
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=80)
+    app.run(host='0.0.0.0', port=3000)

@@ -1,16 +1,14 @@
 {% extends "layout.html" %}
 {% block content %}
 <div class="row">
-          <div class="col-lg-6">
-            <h2>Your Kernels</h2>
+          <div class="col-lg-12">
+            <h2>Your Kernels</h2><p /><a href="/kernels/new" class="btn btn-success">Create Kernel</a><p />
             <div class="table-responsive">
               <table class="table table-bordered table-hover">
                 <thead>
                   <tr>
                     <th>Name</th>
-                    <th>Image</th>
-                    <th>Subdomain</th>
-                    <th>Root</th>
+                    <th>URL</th>
 		    <th>State</th>
                     <th>Actions</th>
                   </tr>
@@ -19,9 +17,7 @@
                 {% for kernel in user_kernels %}
                   <tr>
                     <td>{{ kernel.name }}</td>
-                    <td>{{ kernel.image }}</td>
-                    <td><a href={{ kernel.subdomain }} target="_blank">{{ kernel.subdomain }}</a></td>
-                    <td>{{ kernel.root }}</td>
+                    <td><a href=http://{{ kernel.subdomain }} target="_blank">{{ kernel.subdomain }}</a></td>
 		    <td>{{ kernel.state }}</td>
 		    {% if kernel.state == 'Running' %}
                     	<td><a class="btn btn-primary btn-xs" href="/kernels/kill/{{ kernel.kernel_pid }}">Kill</a></td>
