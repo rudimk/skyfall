@@ -18,12 +18,14 @@ from flask_peewee.admin import ModelAdmin
 
 from flask_debugtoolbar import DebugToolbarExtension
 
+from conf import DB_NAME, DB_USER, DB_PASSWORD
+
 # configure our database
 DATABASE = {
-    'name': 'skyfall',
+    'name': DB_NAME,
     'engine': 'peewee.MySQLDatabase',
-    'user': 'root',
-    'passwd': 'gypsydanger',
+    'user': DB_USER,
+    'passwd': DB_PASSWORD,
 }
 
 DEBUG = True
