@@ -26,3 +26,4 @@ wsgiref==0.1.2
 wtf-peewee==0.2.2
 mysql-python==1.2.5
 redis==2.10.1
+pexpect==3.3
