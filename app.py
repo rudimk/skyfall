@@ -23,7 +23,7 @@ DATABASE = {
     'name': 'skyfall',
     'engine': 'peewee.MySQLDatabase',
     'user': 'root',
-    'passwd': 'brokenstrings',
+    'passwd': 'gypsydanger',
 }
 
 DEBUG = True
@@ -146,14 +146,14 @@ def kernel_start(user, port, notebook_password, name):
     print "Notebook process started with pid: %s" %process.pid
     process.logfile = sys.stdout
     with rds.pipeline() as pipe:
-	domain_root = '.skyfall.mathharbor.com'
-	domain = name + domain_root
-	domain_key = "frontend:{0}".format(domain)
-	domain_port_url = "http://0.0.0.0:{0}".format(port)
-	pipe.delete(domain_key)
-	pipe.rpush(domain_key, name)
-	pipe.rpush(domain_key, domain_port_url)
-	pipe.execute()
+	   domain_root = '.skyfall.mathharbor.com'
+	   domain = name + domain_root
+	   domain_key = "frontend:{0}".format(domain)
+	   domain_port_url = "http://0.0.0.0:{0}".format(port)
+	   pipe.delete(domain_key)
+	   pipe.rpush(domain_key, name)
+	   pipe.rpush(domain_key, domain_port_url)
+	   pipe.execute()
     return process
 
 
@@ -224,13 +224,13 @@ def new_kernel_view():
         i = 'mathharbor/ipython' #request.form["image"]
         image = Image.select().where(Image.name == i)
         name = request.form["name"]
-	plaintext_password = request.form["password"]
-	notebook_password = passwd(plaintext_password)
+        plaintext_password = request.form["password"]
+        notebook_password = passwd(plaintext_password)
         subdomain = '%s.skyfall.mathharbor.com' %(name)
         port = get_open_port()
         root = '/root/skyfall/files/%s' %user.username
         new_kernel_process = kernel_start(user=user, port=port, notebook_password=notebook_password, name=name)
-	print "Saving kernel details to the database..."
+        print "Saving kernel details to the database..."
         new_kernel = Kernel(name=name, owner=user, subdomain=subdomain, port=port, root=root, state='Running', image=image, kernel_pid=new_kernel_process.pid)
 	new_kernel.save()
 	print "Adding kernel to global kernel list..."
@@ -255,4 +255,4 @@ def kernel_kill_view(kernel_pid):
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=3000)
+    app.run(host='0.0.0.0', port=9000)
